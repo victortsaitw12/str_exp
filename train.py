@@ -17,6 +17,9 @@ def train(opt, log):
                                 img_w=opt.img_w, img_h=opt.img_h, 
                                 charset=opt.charset, rgb=opt.rgb, 
                                 pretrain=False, limit=opt.data_limit)
+    # train_dataset = RawDataset(root=opt.raw_root, file_path=opt.validation_path,
+    #                             img_w=opt.img_w, img_h=opt.img_h, 
+    #                             charset=opt.charset, rgb=opt.rgb)
     valid_dataset = RawDataset(root=opt.raw_root, file_path=opt.validation_path,
                                 img_w=opt.img_w, img_h=opt.img_h, 
                                 charset=opt.charset, rgb=opt.rgb)
@@ -96,8 +99,8 @@ def train(opt, log):
 
           
           step += 1
-
     log.close()
+    save_ckp(model.state_dict(), optimizer.state_dict(), epoch, step, opt.save_path)
     log('[Train]Done Training!!!!!!!!!!!!!!!')
 
 def train_one_batch(loader, model, criterion, optimizer, opt):
@@ -123,7 +126,10 @@ def train_one_batch(loader, model, criterion, optimizer, opt):
         tgt_y.contiguous().view(-1)
       )
     optimizer.zero_grad()
+    # a = list(model.parameters())[0].clone()
     loss.backward()
     nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)
     optimizer.step()
+    # b = list(model.parameters())[0].clone()
+    # print(torch.equal(a.data, b.data))
     yield loss

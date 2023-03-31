@@ -16,7 +16,8 @@ class SeqCLRProj(nn.Module):
     # if self.working_layer == 'backbone_feature':
     #     features = features.permute(0, 2, 3, 1).flatten(1, 2)  # (N, E, H, W) -> (N, H*W, E)
     # print('features:', features.shape)
-    features = features.permute(0, 2, 3, 1).flatten(1, 2)  # (N, E, H, W) -> (N, H*W, E)
+    if len(features.shape) == 4:
+      features = features.permute(0, 2, 3, 1).flatten(1, 2)  # (N, E, H, W) -> (N, H*W, E)
     projected_features = self.projection(features)
     projected_instances = self.instance_mapping_func(projected_features)
     return projected_instances

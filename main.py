@@ -14,44 +14,46 @@ import sys
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # utility
-    parser.add_argument('--action', default="pretrain", 
+    parser.add_argument('--action', default="train", 
                         help='predict || train || pretrain || finetune')
     parser.add_argument('--debug_mode', default=False, help='debug mode')
     parser.add_argument('--log_path', default='info.log')
-    parser.add_argument('--save_path', default=r'C:\Users\victor\Desktop\exp\checkpoints')
-    parser.add_argument('--encoder_path', default=r'C:\Users\victor\Desktop\exp\checkpoints\seqclr')
+    parser.add_argument('--save_path', default=r'C:\Users\victor\Desktop\experiment\checkpoints')
+    parser.add_argument('--encoder_path', default=r'C:\Users\victor\Desktop\experiment\checkpoints\seqclr')
     parser.add_argument('--save_step', type=int, default=200)
 
     # dataset
-    parser.add_argument('--lmdb_root', default=r'C:\Users\victor\Desktop\exp\datasets\TCSynth')
-    parser.add_argument('--raw_root', default=r'C:\Users\victor\Desktop\exp\datasets\TC-STR')
+    parser.add_argument('--lmdb_root', default=r'C:\Users\victor\Desktop\experiment\datasets\TCSynth')
+    parser.add_argument('--raw_root', default=r'C:\Users\victor\Desktop\experiment\datasets\TC-STR')
     parser.add_argument('--validation_path', default='train_labels.txt')
     parser.add_argument('--test_path', default='test_labels.txt')
-    parser.add_argument('--char_path', default=r'C:\Users\victor\Desktop\exp\datasets\cht_tra_characters.txt')
-    parser.add_argument('--data_limit', default=1)
+    parser.add_argument('--char_path', default=r'C:\Users\victor\Desktop\experiment\datasets\cht_tra_characters.txt')
+    parser.add_argument('--data_limit', default=0.05)
     parser.add_argument('--img_w', type=int, default=128)
     parser.add_argument('--img_h', type=int, default=32)
     parser.add_argument('--rgb', action='store_true', default=True, help='rgb')
-    parser.add_argument('--max_len', type=int, default=80)
+    parser.add_argument('--max_len', type=int, default=50)
     # Training
     # parser.add_argument('--d_model', type=int, default=32)
-    parser.add_argument('--epochs', type=int, default=25)
-    parser.add_argument('--batch_size', type=int, default=304, 
+    parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--batch_size', type=int, default=64,
                         help="train:64 || pretrain:304")
     parser.add_argument('--optimizer', default='adam', help='adam || adamW')
-    parser.add_argument('--lr', default=1e-4, help='1e-4 || 3e-4')
-    parser.add_argument('--wd', default=1e-4, help="1e-4 || 0.05")
-    parser.add_argument('--grad_clip', type=int, default=20)
+    parser.add_argument('--lr', default=1e-4, help='1e-4')
+    parser.add_argument('--wd', default=0, help="0 || 0.05")
+    parser.add_argument('--grad_clip', type=int, default=5, 
+                        help="20 || 5")
     parser.add_argument('--dropout', type=int, default=0.1)
     parser.add_argument('--num_workers', type=int, default=0)
     # architecture
     parser.add_argument('--freeze_encoder', default=False)
-    parser.add_argument('--trans', default="None", help='TPS || None') 
+    parser.add_argument('--trans', default="None", 
+                        help='TPS || None') 
     parser.add_argument('--encoder', default="SVTR_T", 
                         help='VGG || ResNet || GRCNN || SVTR_L || SVTR_T || None') 
     parser.add_argument('--encoder_with_transformer', default=False)
-    parser.add_argument('--SequenceModeling', 
-                        default="BiLSTM || Attn | Position Attn || None")
+    parser.add_argument('--SequenceModeling', default="None",
+                        help="BiLSTM || Attn | Position Attn || None")
     parser.add_argument('--decoder', default="CTC", 
                         help='CTC || SeqAttn || Transformer || None')
     parser.add_argument('--input_channel', type=int, default=3,

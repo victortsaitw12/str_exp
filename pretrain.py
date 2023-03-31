@@ -49,6 +49,11 @@ def pretrain(opt, log):
         scheduler.step()
         log.add_scalar('Pretrain/SeqCLCR_LR', scheduler.get_last_lr()[0], epoch)
 
+    log.close()
+    save_ckp(model.state_dict(), optimizer.state_dict(),
+            epoch, step, opt.encoder_path,
+            scheduler_last_epoch=scheduler.last_epoch,
+            scheduler_step_count=scheduler._step_count)        
     log('[SeqCLR]Done Training!!!!!!!!!!!!!!!')
 
 def pretrainByBatch(loader, model, criterion, optimizer, opt):
