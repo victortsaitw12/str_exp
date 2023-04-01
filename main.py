@@ -8,14 +8,15 @@ from utility import MyLogger, check_checkpoints
 from pretrain import pretrain
 from train import train
 from predict import predict
+from benchmark import benchmark
 import sys
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # utility
-    parser.add_argument('--action', default="train", 
-                        help='predict || train || pretrain || finetune')
+    parser.add_argument('--action', default="benchmark", 
+                        help='predict || train || pretrain || finetune || benchmark')
     parser.add_argument('--debug_mode', default=False, help='debug mode')
     parser.add_argument('--log_path', default='info.log')
     parser.add_argument('--save_path', default=r'C:\Users\victor\Desktop\experiment\checkpoints')
@@ -110,6 +111,9 @@ if __name__ == '__main__':
     elif opt.action == 'predict':
       opt.batch_size = 1
       predict(opt, log)
+    elif opt.action == 'benchmark':
+      opt.batch_size = 1
+      benchmark(opt, log)
     else:
       if opt.action == 'finetune' and check_checkpoints(opt.save_path):
         print(f'In finetune, there is {opt.save_path}.')
