@@ -39,6 +39,34 @@ def validation(loader, model, criterion, optimizer, opt):
           char_list = [t[i] for i in range(l)]
           labels.append(''.join(opt.charset.lookup_tokens(char_list)))
 
+      elif opt.decoder == 'LM':
+        src, tgt, n_tokens = batch
+        src, tgt = src.to(opt.device), tgt.to(opt.device)
+        l_out, v_out = model(src, tgt)
+        l_loss = criterion(
+          l_out.contiguous().view(-1, l_out.size(-1)),
+          tgt.contiguous().view(-1)
+        )
+        v_loss = criterion(
+          v_out.contiguous().view(-1, v_out.size(-1)),
+          tgt.contiguous().view(-1)
+        )
+        loss = sum([l_loss * 0.5, v_loss * 0.5])
+        _, preds_index = torch.max(l_out, dim=2)
+        preds_str = []
+        labels = []
+        for index in range(opt.batch_size):
+          pred_str = preds_index[index, :].tolist()
+          eos_res = np.where(np.equal(pred_str, opt.charset.get_eos_index()))
+          if eos_res[0].any():
+            eos_index = eos_res[0][0]
+            pred_str = pred_str[:eos_index]
+          preds_str.append(''.join(opt.charset.lookup_tokens(pred_str)))
+
+          t = tgt[index, :].tolist()
+          char_list = [t[i] for i in range(n_tokens[index] - 1)]# substract eos token
+          labels.append(''.join(opt.charset.lookup_tokens(char_list)))
+
       else: # Attn || Transformer
         tgt = torch.zeros(opt.batch_size, opt.max_len).to(opt.device)
         src, _, tgt_y, _ = batch
@@ -58,6 +86,7 @@ def validation(loader, model, criterion, optimizer, opt):
         #     preds_str.append(text)
         # Load Labels
         labels = []
+        preds_str = []
         for i in range(opt.batch_size):
             label = tgt_y[i].tolist()
             label = label[:label.index(opt.charset.get_eos_index())]
@@ -68,7 +97,7 @@ def validation(loader, model, criterion, optimizer, opt):
             if eos_res[0].any():
               eos_index = eos_res[0][0]
               pred_str = pred_str[:eos_index]
-            preds_str = ''.join(opt.charset.lookup_tokens(pred_str))
+            preds_str.append(''.join(opt.charset.lookup_tokens(pred_str)))
 
       tot_loss += loss.data.sum()
       tot_loss_count += loss.data.numel()

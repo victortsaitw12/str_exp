@@ -10,6 +10,7 @@ from models.transformerencoder import TransformerEncoder
 from models.transformerdecoder import TransformerDecoder
 from models.tps import TPS_SpatialTransformerNetwork
 from models.svtr import large_svtr, tiny_svtr
+from models.bcnlanguage import BCNLanguage
 
 class Encoder(nn.Module):
     def __init__(self, opt):
@@ -74,9 +75,14 @@ class Model(nn.Module):
     def __init__(self, opt):
         super(Model, self).__init__()
         self.opt = opt
-        self.stages = {'Trans': opt.trans, 'encoder': opt.encoder,
-                       'encoder_with_transformer': opt.encoder_with_transformer,
-                       'Seq': opt.SequenceModeling, 'decoder': opt.decoder}
+        self.stages = {
+            'Trans': opt.trans, 
+            'encoder': opt.encoder,
+            'encoder_with_transformer': opt.encoder_with_transformer,
+            'Seq': opt.SequenceModeling, 
+            'decoder': opt.decoder,
+            'LM': opt.language_module
+        }
         self.encoder = Encoder(opt)
         """ Transformation """
         # if opt.Transformation == 'TPS':
@@ -119,6 +125,9 @@ class Model(nn.Module):
         if opt.decoder == 'CTC':
             self.decoder = nn.Linear(self.SequenceModeling_output, opt.num_class)
 
+        elif opt.decoder == 'LM':
+            self.decoder = nn.Linear(self.SequenceModeling_output, opt.num_class)
+
         elif opt.decoder == 'SeqAttn':
             self.decoder = SeqAttention(self.SequenceModeling_output, opt.hidden_size, 
                                      opt.num_class)
@@ -129,8 +138,19 @@ class Model(nn.Module):
                                               layers=opt.transformation_decoder_ln,
                                               dropout=opt.dropout, 
                                               pad=opt.charset.get_pad_index())
+
         else:
             raise Exception('Prediction is neither CTC or Attn')
+        
+        if opt.language_module != 'None':
+            self.language_module = BCNLanguage(
+              input_channel=self.SequenceModeling_output,
+              num_classes=opt.num_class,
+              max_length=opt.max_len,
+              eos_index=opt.charset.get_eos_index()
+            )
+        else:
+            print('No Language module specified')
         
     def load_encoder_state(self, states_dict):
         print('load encoder state')
@@ -173,7 +193,18 @@ class Model(nn.Module):
         """ Prediction stage """
         if self.stages['decoder'] == 'CTC':
             prediction = self.decoder(contextual_feature.contiguous())
-        else:
+
+        elif self.stages['decoder'] == 'LM':
+            prediction = self.decoder(contextual_feature.contiguous())
+
+        elif self.stages['decoder'] == 'SeqAttn':
             prediction = self.decoder(contextual_feature.contiguous(), text, is_train, batch_max_length=self.opt.max_len)
+        else:
+            prediction = contextual_feature
+
+        if self.stages['LM'] != 'None':
+            tokens = torch.softmax(prediction, dim=-1)
+            l_prediction = self.language_module(tokens)
+            prediction = (l_prediction, prediction)
 
         return prediction

@@ -8,7 +8,7 @@ from dataset.lmdbdataset import LmdbDataset
 from dataset.rawdataset import RawDataset
 from models.model import Model
 from utility import MyLogger, save_ckp, load_ckp, load_encoder_ckp, img_show
-from utility import ctc_collate_fn, attn_collate_fn
+from utility import ctc_collate_fn, attn_collate_fn, lm_collate_fn
 from validation import validation
 
 def train(opt, log):
@@ -27,6 +27,12 @@ def train(opt, log):
     if opt.decoder == 'CTC':
         collate_fn = lambda batch: ctc_collate_fn(batch, max_len=opt.max_len, 
             pad=opt.charset.get_pad_index())
+        
+    elif opt.decoder == 'LM':
+        collate_fn = lambda batch: lm_collate_fn(batch, max_len=opt.max_len,
+            eos=opt.charset.get_eos_index(), 
+            pad=opt.charset.get_pad_index())
+
     else:
         collate_fn = lambda batch: attn_collate_fn(batch=batch, max_len=opt.max_len,
             bos=opt.charset.get_bos_index(), 
@@ -116,6 +122,21 @@ def train_one_batch(loader, model, criterion, optimizer, opt):
       out_size = torch.IntTensor([out.size(1)] * opt.batch_size)
       out = out.log_softmax(2).permute(1, 0, 2)
       loss = criterion(out, tgt, out_size, n_tokens)
+
+    elif opt.decoder == 'LM':
+      src, tgt, n_tokens = batch
+      src, tgt = src.to(opt.device), tgt.to(opt.device)
+      l_out, v_out = model(src, tgt)
+      l_loss = criterion(
+        l_out.contiguous().view(-1, l_out.size(-1)),
+        tgt.contiguous().view(-1)
+      )
+      v_loss = criterion(
+        v_out.contiguous().view(-1, v_out.size(-1)),
+        tgt.contiguous().view(-1)
+      )
+      loss = sum([l_loss * 0.5, v_loss * 0.5])
+
     else:
       src, tgt, tgt_y, n_tokens = batch
       src, tgt, tgt_y = src.to(opt.device), tgt.to(opt.device), tgt_y.to(opt.device)

@@ -46,6 +46,7 @@ if __name__ == '__main__':
                         help="20 || 5")
     parser.add_argument('--dropout', type=int, default=0.1)
     parser.add_argument('--num_workers', type=int, default=0)
+    parser.add_argument('--num_fiducial', default=20, help="for TPS")
     # architecture
     parser.add_argument('--freeze_encoder', default=False)
     parser.add_argument('--trans', default="None", 
@@ -55,8 +56,11 @@ if __name__ == '__main__':
     parser.add_argument('--encoder_with_transformer', default=False)
     parser.add_argument('--SequenceModeling', default="None",
                         help="BiLSTM || Attn | Position Attn || None")
-    parser.add_argument('--decoder', default="CTC", 
-                        help='CTC || SeqAttn || Transformer || None')
+    parser.add_argument('--decoder', default="LM", 
+                        help='CTC || SeqAttn || Transformer || LM || None')
+    parser.add_argument('--language_module', default="BCN", 
+                        help='BCN || None')
+    
     parser.add_argument('--input_channel', type=int, default=3,
                         help='the number of input channel of Feature extractor')
     parser.add_argument('--output_channel', type=int, default=384,
@@ -75,7 +79,7 @@ if __name__ == '__main__':
     parser.add_argument('--projection_hidden_size', type=int, default=256, 
                         help='the size of the SeqCLR hidden state')
     # Predict
-    parser.add_argument('--predict_img', default=r'C:\Users\victor\Desktop\exp\datasets\TC-STR\images\poster_03690_438_菸灰缸.jpg')
+    parser.add_argument('--predict_img', default=r'C:\Users\victor\Desktop\experiment\datasets\TC-STR\images\poster_03690_438_菸灰缸.jpg')
 
     opt = parser.parse_args()
     log = MyLogger(opt.log_path)
@@ -85,15 +89,24 @@ if __name__ == '__main__':
 
     if opt.decoder == 'CTC':
       charset = Charset(char_path=opt.char_path, specials=['<blk>', '<unk>'])
-      charset.set_default_index(2)
-      charset.set_pad_index(0)
-
-    elif opt.decoder == 'Attn':
-      charset = Charset(char_path=opt.char_path, specials=['<s>', '</s>', '<unk>'])
-      charset.set_default_index(2)
+      charset.set_default_index(1)
       charset.set_pad_index(0)
       charset.set_bos_index(0)
-      charset.set_eos_index(1)
+      charset.set_eos_index(0)
+
+    elif opt.decoder == 'LM':
+      charset = Charset(char_path=opt.char_path, specials=['</s>', '<pad>', '<unk>'])
+      charset.set_default_index(2)
+      charset.set_pad_index(1)
+      charset.set_eos_index(0)
+      charset.set_bos_index(0)
+      
+    # elif opt.decoder == 'Attn':
+    #   charset = Charset(char_path=opt.char_path, specials=['<s>', '</s>', '<unk>'])
+    #   charset.set_default_index(2)
+    #   charset.set_pad_index(0)
+    #   charset.set_bos_index(0)
+    #   charset.set_eos_index(1)
 
     else:
       charset = Charset(char_path=opt.char_path, specials=['<s>', '</s>', '<pad>', '<unk>'])

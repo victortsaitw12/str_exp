@@ -44,6 +44,18 @@ def benchmark(opt, log):
                     if t[i] != 0 and (not (i > 0 and t[i - 1] == t[i]))
                 ]  # removing repeated characters and blank.
                 pred = ''.join(opt.charset.lookup_tokens(char_list))
+            elif opt.decoder == 'LM':
+                tgt = torch.LongTensor(opt.batch_size, opt.max_len)
+                l_out, _ = model(img, tgt)
+                _, preds_index = torch.max(l_out, dim=2)
+
+                for index in range(opt.batch_size):
+                    pred_str = preds_index[index, :].tolist()
+                    eos_res = np.where(np.equal(pred_str, opt.charset.get_eos_index()))
+                    if eos_res[0].any():
+                        eos_index = eos_res[0][0]
+                        pred_str = pred_str[:eos_index]
+                    pred = ''.join(opt.charset.lookup_tokens(pred_str))
             else:
                 tgt = torch.LongTensor(opt.batch_size, opt.max_len)
                 tgt.fill_(opt.charset.get_bos_index())

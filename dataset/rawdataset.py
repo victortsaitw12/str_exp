@@ -15,7 +15,7 @@ class RawDataset(Dataset):
     self.rgb = rgb
     self.imgs, self.labels = self.read(file_path)
     self.charset = charset
-    self.charset.set_default_index(3)
+    # self.charset.set_default_index(3)
     self.transform = transforms.Compose([
         transforms.ToTensor()
     ])

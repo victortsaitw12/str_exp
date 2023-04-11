@@ -40,6 +40,22 @@ def ctc_collate_fn(batch, max_len, pad):
   n_tokens =  torch.IntTensor(length)
   return src, tgt,  n_tokens
 
+def lm_collate_fn(batch, max_len, eos, pad):
+  tgt = []
+  src = []
+  length = []
+  for _src, _tgt in batch:
+    length.append(len(_tgt) + 1)
+    _tgt = _tgt + [eos]
+    _tgt = torch.LongTensor(_tgt)
+    _tgt = F.pad(_tgt, (0, max_len - len(_tgt)), value=pad)
+    tgt.append(_tgt)
+    src.append(_src)
+  tgt = torch.stack(tgt)
+  src = torch.stack(src)
+  n_tokens =  torch.IntTensor(length)
+  return src, tgt, n_tokens
+
 def attn_collate_fn(batch, max_len, bos, eos, pad):
   tgt = []
   src = []

@@ -27,8 +27,8 @@ class LmdbDataset(Dataset):
     self.rgb = rgb
     self.pretrain = pretrain
     self.charset = charset
-    if charset:
-      self.charset.set_default_index(3)
+    # if charset:
+    #   self.charset.set_default_index(3)
     
     if pretrain:
       self.augment = get_augmentations().augment_image
