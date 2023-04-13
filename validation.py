@@ -42,17 +42,20 @@ def validation(loader, model, criterion, optimizer, opt):
       elif opt.decoder == 'LM':
         src, tgt, n_tokens = batch
         src, tgt = src.to(opt.device), tgt.to(opt.device)
-        l_out, v_out = model(src, tgt)
-        l_loss = criterion(
-          l_out.contiguous().view(-1, l_out.size(-1)),
-          tgt.contiguous().view(-1)
-        )
-        v_loss = criterion(
-          v_out.contiguous().view(-1, v_out.size(-1)),
-          tgt.contiguous().view(-1)
-        )
-        loss = sum([l_loss * 0.5, v_loss * 0.5])
-        _, preds_index = torch.max(l_out, dim=2)
+        out = model(src, tgt)
+        loss = criterion(out, tgt)
+
+        # l_out, v_out = model(src, tgt)
+        # l_loss = criterion(
+        #   l_out.contiguous().view(-1, l_out.size(-1)),
+        #   tgt.contiguous().view(-1)
+        # )
+        # v_loss = criterion(
+        #   v_out.contiguous().view(-1, v_out.size(-1)),
+        #   tgt.contiguous().view(-1)
+        # )
+        # loss = sum([l_loss * 0.5, v_loss * 0.5])
+        _, preds_index = torch.max(out[0][-1], dim=2)
         preds_str = []
         labels = []
         for index in range(opt.batch_size):

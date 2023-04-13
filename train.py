@@ -10,6 +10,7 @@ from models.model import Model
 from utility import MyLogger, save_ckp, load_ckp, load_encoder_ckp, img_show
 from utility import ctc_collate_fn, attn_collate_fn, lm_collate_fn
 from validation import validation
+from loss.multiloss import MultiLoss
 
 def train(opt, log):
     # === Load dataset ===
@@ -65,8 +66,8 @@ def train(opt, log):
     if opt.decoder == 'CTC':
       criterion = nn.CTCLoss(zero_infinity=True)
     else:
-      criterion = nn.CrossEntropyLoss(ignore_index=opt.charset.get_pad_index())
-
+      # criterion = nn.CrossEntropyLoss(ignore_index=opt.charset.get_pad_index())
+      criterion = MultiLoss(ignore_index=opt.charset.get_pad_index())
     # === Load previous status ===
     start_epoch = 0
     step = 0
@@ -126,16 +127,18 @@ def train_one_batch(loader, model, criterion, optimizer, opt):
     elif opt.decoder == 'LM':
       src, tgt, n_tokens = batch
       src, tgt = src.to(opt.device), tgt.to(opt.device)
-      l_out, v_out = model(src, tgt)
-      l_loss = criterion(
-        l_out.contiguous().view(-1, l_out.size(-1)),
-        tgt.contiguous().view(-1)
-      )
-      v_loss = criterion(
-        v_out.contiguous().view(-1, v_out.size(-1)),
-        tgt.contiguous().view(-1)
-      )
-      loss = sum([l_loss * 0.5, v_loss * 0.5])
+      out = model(src, tgt)
+      loss = criterion(out, tgt)
+      # l_out, v_out = model(src, tgt)
+      # l_loss = criterion(
+      #   l_out.contiguous().view(-1, l_out.size(-1)),
+      #   tgt.contiguous().view(-1)
+      # )
+      # v_loss = criterion(
+      #   v_out.contiguous().view(-1, v_out.size(-1)),
+      #   tgt.contiguous().view(-1)
+      # )
+      # loss = sum([l_loss * 0.5, v_loss * 0.5])
 
     else:
       src, tgt, tgt_y, n_tokens = batch

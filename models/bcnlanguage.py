@@ -52,7 +52,7 @@ class BCNLanguage(nn.Module):
     # if config.model_language_checkpoint is not None:
     #   self.load(config.model_language_checkpoint)
 
-  def forward(self, tokens):
+  def forward_tokens(self, tokens):
     """
     Args:
         tokens: (N, T, C) where T is length, N is batch size and C is classes number
@@ -85,7 +85,14 @@ class BCNLanguage(nn.Module):
     #         'loss_weight':self.loss_weight, 'name': 'language'}
     # return res
 
-
+  def forward(self, tokens, num_iter=3):
+    tokens_list = []
+    for i in range(num_iter):
+      tokens = torch.softmax(tokens, dim=-1)
+      tokens = self.forward_tokens(tokens)
+      tokens_list.append(tokens)
+    return tokens_list
+  
   def _get_length(self, logit):
     """ Greed decoder to obtain length from logit"""
     out = (logit.argmax(dim=-1) == self.eos_index)

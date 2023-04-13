@@ -203,8 +203,8 @@ class Model(nn.Module):
             prediction = contextual_feature
 
         if self.stages['LM'] != 'None':
-            tokens = torch.softmax(prediction, dim=-1)
-            l_prediction = self.language_module(tokens)
+            # tokens = torch.softmax(prediction, dim=-1)
+            l_prediction = self.language_module(prediction)
             prediction = (l_prediction, prediction)
 
         return prediction
