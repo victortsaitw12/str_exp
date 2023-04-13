@@ -10,7 +10,7 @@ from models.transformerencoder import TransformerEncoder
 from models.transformerdecoder import TransformerDecoder
 from models.tps import TPS_SpatialTransformerNetwork
 from models.svtr import large_svtr, tiny_svtr
-from models.bcnlanguage import BCNLanguage
+from models.bcnlanguage import BCNEncoder, BCNAlignment
 
 class Encoder(nn.Module):
     def __init__(self, opt):
@@ -126,7 +126,8 @@ class Model(nn.Module):
             self.decoder = nn.Linear(self.SequenceModeling_output, opt.num_class)
 
         elif opt.decoder == 'LM':
-            self.decoder = nn.Linear(self.SequenceModeling_output, opt.num_class)
+            self.decoder = BCNEncoder(self.SequenceModeling_output, opt.num_class)
+            # self.decoder = nn.Linear(self.SequenceModeling_output, opt.num_class)
 
         elif opt.decoder == 'SeqAttn':
             self.decoder = SeqAttention(self.SequenceModeling_output, opt.hidden_size, 
@@ -142,12 +143,12 @@ class Model(nn.Module):
         else:
             raise Exception('Prediction is neither CTC or Attn')
         
-        if opt.language_module != 'None':
-            self.language_module = BCNLanguage(
+        if opt.decoder == 'LM' and opt.language_module != 'None':
+            self.language_module = BCNAlignment(
               input_channel=self.SequenceModeling_output,
               num_classes=opt.num_class,
               max_length=opt.max_len,
-              eos_index=opt.charset.get_eos_index()
+              eos_index=opt.charset.get_eos_index(),
             )
         else:
             print('No Language module specified')
@@ -196,15 +197,15 @@ class Model(nn.Module):
 
         elif self.stages['decoder'] == 'LM':
             prediction = self.decoder(contextual_feature.contiguous())
-
+            
         elif self.stages['decoder'] == 'SeqAttn':
             prediction = self.decoder(contextual_feature.contiguous(), text, is_train, batch_max_length=self.opt.max_len)
         else:
             prediction = contextual_feature
 
-        if self.stages['LM'] != 'None':
+        if self.stages['decoder'] == 'LM' and self.stages['LM'] != 'None':
             # tokens = torch.softmax(prediction, dim=-1)
-            l_prediction = self.language_module(prediction)
-            prediction = (l_prediction, prediction)
+            prediction = self.language_module(prediction)
+            # prediction = (l_prediction, prediction)
 
         return prediction

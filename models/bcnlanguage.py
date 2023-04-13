@@ -26,7 +26,7 @@ class BCNLanguage(nn.Module):
   def __init__(self, input_channel, num_classes, max_length, eos_index):
     super(BCNLanguage, self).__init__()
     self.max_length = max_length  # additional stop token
-    d_model = 512
+    d_model = 384
     nhead = 8
     d_inner = 2048
     dropout = 0.1
@@ -52,7 +52,7 @@ class BCNLanguage(nn.Module):
     # if config.model_language_checkpoint is not None:
     #   self.load(config.model_language_checkpoint)
 
-  def forward_tokens(self, tokens):
+  def forward(self, tokens):
     """
     Args:
         tokens: (N, T, C) where T is length, N is batch size and C is classes number
@@ -78,20 +78,20 @@ class BCNLanguage(nn.Module):
     output = output.permute(1, 0, 2)  # (N, T, E)
     # print(output)
     logits = self.cls(output)  # (N, T, C)
-    return logits
+    return logits, output
     # pt_lengths = self._get_length(logits)
 
     # res =  {'feature': output, 'logits': logits, 'pt_lengths': pt_lengths,
     #         'loss_weight':self.loss_weight, 'name': 'language'}
     # return res
 
-  def forward(self, tokens, num_iter=3):
-    tokens_list = []
-    for i in range(num_iter):
-      tokens = torch.softmax(tokens, dim=-1)
-      tokens = self.forward_tokens(tokens)
-      tokens_list.append(tokens)
-    return tokens_list
+  # def forward(self, tokens, num_iter=3):
+  #   tokens_list = []
+  #   for i in range(num_iter):
+  #     tokens = torch.softmax(tokens, dim=-1)
+  #     tokens = self.forward_tokens(tokens)
+  #     tokens_list.append(tokens)
+  #   return tokens_list
   
   def _get_length(self, logit):
     """ Greed decoder to obtain length from logit"""
@@ -118,3 +118,49 @@ class BCNLanguage(nn.Module):
     mask = torch.eye(sz, device=device)
     mask = mask.float().masked_fill(mask == 1, float('-inf'))
     return mask
+  
+
+
+
+class BCNAlignment(nn.Module):
+  def __init__(self, input_channel, num_classes, max_length, eos_index):
+    super(BCNAlignment, self).__init__()
+    self.max_length = max_length  # additional stop token
+    self.eos_index = eos_index
+    self.language = BCNLanguage(input_channel, num_classes, max_length, eos_index)
+    self.w_att = nn.Linear(2 * input_channel, input_channel)
+    self.cls = nn.Linear(input_channel, num_classes)
+
+  def forward_iter(self,  l_feature, v_feature):
+      """
+      Args:
+          l_feature: (N, T, E) where T is length, N is batch size and d is dim of model
+          v_feature: (N, T, E) shape the same as l_feature 
+      """
+      f = torch.cat((l_feature, v_feature), dim=2)
+      f_att = torch.sigmoid(self.w_att(f))
+      output = f_att * v_feature + (1 - f_att) * l_feature
+
+      logits = self.cls(output)  # (N, T, C)
+      return logits, output
+
+  def forward(self, args):
+      v_features, v_tokens = args
+      all_l_res, all_a_res = [], []
+      for _ in range(3):
+          tokens = torch.softmax(v_tokens, dim=-1)
+          l_tokens, l_features = self.language(tokens)
+          all_l_res.append(l_tokens)
+          a_tokens, a_features = self.forward_iter(l_features, v_features)
+          all_a_res.append(a_tokens)
+      return all_a_res, all_l_res, v_tokens
+  
+
+class BCNEncoder(nn.Module):
+    def __init__(self, input_channel, num_classes,):
+      super(BCNEncoder, self).__init__()
+      self.cls = nn.Linear(input_channel, num_classes)
+
+    def forward(self, x):
+      tokens = self.cls(x)
+      return x, tokens
