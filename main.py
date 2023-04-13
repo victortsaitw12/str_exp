@@ -15,7 +15,7 @@ import sys
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # utility
-    parser.add_argument('--action', default="benchmark", 
+    parser.add_argument('--action', default="train", 
                         help='predict || train || pretrain || finetune || benchmark')
     parser.add_argument('--debug_mode', default=False, help='debug mode')
     parser.add_argument('--log_path', default='info.log')
