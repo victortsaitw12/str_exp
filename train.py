@@ -14,13 +14,13 @@ from loss.multiloss import MultiLoss
 
 def train(opt, log):
     # === Load dataset ===
-    # train_dataset = LmdbDataset(root=opt.lmdb_root, 
-    #                             img_w=opt.img_w, img_h=opt.img_h, 
-    #                             charset=opt.charset, rgb=opt.rgb, 
-    #                             pretrain=False, limit=opt.data_limit)
-    train_dataset = RawDataset(root=opt.raw_root, file_path=opt.validation_path,
+    train_dataset = LmdbDataset(root=opt.lmdb_root, 
                                 img_w=opt.img_w, img_h=opt.img_h, 
-                                charset=opt.charset, rgb=opt.rgb)
+                                charset=opt.charset, rgb=opt.rgb, 
+                                pretrain=False, limit=opt.data_limit)
+    # train_dataset = RawDataset(root=opt.raw_root, file_path=opt.validation_path,
+    #                             img_w=opt.img_w, img_h=opt.img_h, 
+    #                             charset=opt.charset, rgb=opt.rgb)
     valid_dataset = RawDataset(root=opt.raw_root, file_path=opt.validation_path,
                                 img_w=opt.img_w, img_h=opt.img_h, 
                                 charset=opt.charset, rgb=opt.rgb)

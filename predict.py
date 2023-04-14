@@ -41,8 +41,8 @@ def predict(opt, log):
             preds_str = ''.join(opt.charset.lookup_tokens(char_list))
         elif opt.decoder == 'LM':
             tgt = torch.LongTensor(opt.batch_size, opt.max_len)
-            l_outs, _ = model(img, tgt)
-            _, preds_index = torch.max(l_outs[-1], dim=2)
+            out = model(img, tgt)
+            _, preds_index = torch.max(out[0][-1], dim=2)
 
             for index in range(opt.batch_size):
                 pred_str = preds_index[index, :].tolist()

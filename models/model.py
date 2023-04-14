@@ -149,6 +149,7 @@ class Model(nn.Module):
               num_classes=opt.num_class,
               max_length=opt.max_len,
               eos_index=opt.charset.get_eos_index(),
+              opt=opt
             )
         else:
             print('No Language module specified')

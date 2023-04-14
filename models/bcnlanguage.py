@@ -123,13 +123,18 @@ class BCNLanguage(nn.Module):
 
 
 class BCNAlignment(nn.Module):
-  def __init__(self, input_channel, num_classes, max_length, eos_index):
+  def __init__(self, input_channel, num_classes, max_length, eos_index, opt):
     super(BCNAlignment, self).__init__()
     self.max_length = max_length  # additional stop token
     self.eos_index = eos_index
     self.language = BCNLanguage(input_channel, num_classes, max_length, eos_index)
     self.w_att = nn.Linear(2 * input_channel, input_channel)
     self.cls = nn.Linear(input_channel, num_classes)
+
+    if opt.language_module_checkpoint != 'None':
+      print('load lm at ', opt.language_module_checkpoint)
+      state_dict = torch.load(opt.language_module_checkpoint, map_location=opt.device)
+      self.language.load_state_dict(state_dict)
 
   def forward_iter(self,  l_feature, v_feature):
       """

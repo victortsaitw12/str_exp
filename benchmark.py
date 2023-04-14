@@ -46,8 +46,8 @@ def benchmark(opt, log):
                 pred = ''.join(opt.charset.lookup_tokens(char_list))
             elif opt.decoder == 'LM':
                 tgt = torch.LongTensor(opt.batch_size, opt.max_len)
-                l_outs, v_out = model(img, tgt)
-                _, preds_index = torch.max(l_outs[-1], dim=2)
+                out = model(img, tgt)
+                _, preds_index = torch.max(out[0][-1], dim=2)
 
                 for index in range(opt.batch_size):
                     pred_str = preds_index[index, :].tolist()
