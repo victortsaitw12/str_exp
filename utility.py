@@ -56,6 +56,22 @@ def lm_collate_fn(batch, max_len, eos, pad):
   n_tokens =  torch.IntTensor(length)
   return src, tgt, n_tokens
 
+def onehot_collate_fn(batch, max_len, charset, device):
+  tgt = []
+  src = []
+  length = []
+  eos = charset.get_eos_index()
+  for _src, _tgt in batch:
+    _tgt = _tgt + [eos]
+    _tgt = torch.LongTensor(_tgt)
+    _tgt = F.pad(_tgt, (0, max_len - len(_tgt)), value=eos)
+    tgt.append(_tgt)
+    src.append(_src)
+  tgt = torch.stack(tgt)
+  tgt = charset.onehot(tgt)
+  src = torch.stack(src)
+  return src, tgt
+
 def attn_collate_fn(batch, max_len, bos, eos, pad):
   tgt = []
   src = []
@@ -228,3 +244,19 @@ class Charset(object):
   
   def __len__(self):
     return len(self.chars)
+  
+  def onehot(self, label, device=None):
+    """ 
+    Args:
+        label: shape (n1, n2, ..., )
+        depth: a scalar
+    Returns:
+        onehot: (n1, n2, ..., depth)
+    """
+    depth = len(self)
+    if not isinstance(label, torch.Tensor):
+        label = torch.tensor(label, device=device)
+    onehot = torch.zeros(label.size() + torch.Size([depth]), device=device)
+    onehot = onehot.scatter_(-1, label.unsqueeze(-1), 1)
+
+    return onehot

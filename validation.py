@@ -40,7 +40,7 @@ def validation(loader, model, criterion, optimizer, opt):
           labels.append(''.join(opt.charset.lookup_tokens(char_list)))
 
       elif opt.decoder == 'LM':
-        src, tgt, n_tokens = batch
+        src, tgt = batch
         src, tgt = src.to(opt.device), tgt.to(opt.device)
         out = model(src, tgt)
         loss = criterion(out, tgt)
@@ -56,6 +56,7 @@ def validation(loader, model, criterion, optimizer, opt):
         # )
         # loss = sum([l_loss * 0.5, v_loss * 0.5])
         _, preds_index = torch.max(out[0][-1], dim=2)
+        tgt = torch.argmax(tgt, dim=-1)
         preds_str = []
         labels = []
         for index in range(opt.batch_size):
@@ -67,8 +68,12 @@ def validation(loader, model, criterion, optimizer, opt):
           preds_str.append(''.join(opt.charset.lookup_tokens(pred_str)))
 
           t = tgt[index, :].tolist()
-          char_list = [t[i] for i in range(n_tokens[index] - 1)]# substract eos token
-          labels.append(''.join(opt.charset.lookup_tokens(char_list)))
+          eos_res = np.where(np.equal(t, opt.charset.get_eos_index()))
+          if eos_res[0].any():
+            eos_index = eos_res[0][0]
+            t = t[:eos_index]
+          labels.append(''.join(opt.charset.lookup_tokens(t)))
+
 
       else: # Attn || Transformer
         tgt = torch.zeros(opt.batch_size, opt.max_len).to(opt.device)

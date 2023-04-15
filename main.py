@@ -60,7 +60,7 @@ if __name__ == '__main__':
                         help='CTC || SeqAttn || Transformer || LM || None')
     parser.add_argument('--language_module', default="BCN", 
                         help='BCN || None')
-    parser.add_argument('--language_module_checkpoint', default=r"C:\Users\victor\Desktop\experiment\checkpoints\language_module\checkpoint.pt", 
+    parser.add_argument('--language_module_checkpoint', default="None", 
                         help='path || None')
     
     parser.add_argument('--input_channel', type=int, default=3,

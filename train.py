@@ -8,19 +8,19 @@ from dataset.lmdbdataset import LmdbDataset
 from dataset.rawdataset import RawDataset
 from models.model import Model
 from utility import MyLogger, save_ckp, load_ckp, load_encoder_ckp, img_show
-from utility import ctc_collate_fn, attn_collate_fn, lm_collate_fn
+from utility import ctc_collate_fn, attn_collate_fn, lm_collate_fn, onehot_collate_fn
 from validation import validation
 from loss.multiloss import MultiLoss
 
 def train(opt, log):
     # === Load dataset ===
-    train_dataset = LmdbDataset(root=opt.lmdb_root, 
-                                img_w=opt.img_w, img_h=opt.img_h, 
-                                charset=opt.charset, rgb=opt.rgb, 
-                                pretrain=False, limit=opt.data_limit)
-    # train_dataset = RawDataset(root=opt.raw_root, file_path=opt.validation_path,
+    # train_dataset = LmdbDataset(root=opt.lmdb_root, 
     #                             img_w=opt.img_w, img_h=opt.img_h, 
-    #                             charset=opt.charset, rgb=opt.rgb)
+    #                             charset=opt.charset, rgb=opt.rgb, 
+    #                             pretrain=False, limit=opt.data_limit)
+    train_dataset = RawDataset(root=opt.raw_root, file_path=opt.validation_path,
+                                img_w=opt.img_w, img_h=opt.img_h, 
+                                charset=opt.charset, rgb=opt.rgb)
     valid_dataset = RawDataset(root=opt.raw_root, file_path=opt.validation_path,
                                 img_w=opt.img_w, img_h=opt.img_h, 
                                 charset=opt.charset, rgb=opt.rgb)
@@ -30,10 +30,13 @@ def train(opt, log):
             pad=opt.charset.get_pad_index())
         
     elif opt.decoder == 'LM':
-        collate_fn = lambda batch: lm_collate_fn(batch, max_len=opt.max_len,
-            eos=opt.charset.get_eos_index(), 
-            pad=opt.charset.get_pad_index())
-
+        # collate_fn = lambda batch: lm_collate_fn(batch, max_len=opt.max_len,
+        #     eos=opt.charset.get_eos_index(), 
+        #     pad=opt.charset.get_pad_index())
+        collate_fn = lambda batch: onehot_collate_fn(batch, 
+            max_len=opt.max_len,
+            charset=opt.charset,
+            device=opt.device)
     else:
         collate_fn = lambda batch: attn_collate_fn(batch=batch, max_len=opt.max_len,
             bos=opt.charset.get_bos_index(), 
@@ -125,7 +128,7 @@ def train_one_batch(loader, model, criterion, optimizer, opt):
       loss = criterion(out, tgt, out_size, n_tokens)
 
     elif opt.decoder == 'LM':
-      src, tgt, n_tokens = batch
+      src, tgt = batch
       src, tgt = src.to(opt.device), tgt.to(opt.device)
       out = model(src, tgt)
       loss = criterion(out, tgt)
