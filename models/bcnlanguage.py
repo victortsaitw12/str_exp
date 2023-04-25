@@ -131,10 +131,10 @@ class BCNAlignment(nn.Module):
     self.w_att = nn.Linear(2 * input_channel, input_channel)
     self.cls = nn.Linear(input_channel, num_classes)
 
-    if opt.language_module_checkpoint != 'None':
-      print('load lm at ', opt.language_module_checkpoint)
-      state_dict = torch.load(opt.language_module_checkpoint, map_location=opt.device)
-      self.language.load_state_dict(state_dict)
+    # if opt.language_module_checkpoint != 'None':
+    #   print('load lm at ', opt.language_module_checkpoint)
+    #   state_dict = torch.load(opt.language_module_checkpoint, map_location=opt.device)
+    #   self.language.load_state_dict(state_dict)
 
   def forward_iter(self,  l_feature, v_feature):
       """

@@ -11,6 +11,7 @@ from models.transformerdecoder import TransformerDecoder
 from models.tps import TPS_SpatialTransformerNetwork
 from models.svtr import large_svtr, tiny_svtr
 from models.bcnlanguage import BCNEncoder, BCNAlignment
+from models.vitstr import ViTSTR
 
 class Encoder(nn.Module):
     def __init__(self, opt):
@@ -47,6 +48,8 @@ class Encoder(nn.Module):
             self.encoder = tiny_svtr(img_size=[opt.img_h, opt.img_w], 
                                       max_seq_len=opt.max_len,
                                       out_channels=opt.output_channel)
+        elif opt.encoder == 'ViTSTR':
+              self.encoder = ViTSTR()
         else:
             raise Exception('No FeatureExtraction module specified')
 

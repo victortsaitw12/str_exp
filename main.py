@@ -6,6 +6,7 @@ import torch
 import argparse
 from utility import MyLogger, check_checkpoints
 from pretrain import pretrain
+from pretrainbcn import pretrainBCN
 from train import train
 from predict import predict
 from benchmark import benchmark
@@ -15,7 +16,7 @@ import sys
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # utility
-    parser.add_argument('--action', default="benchmark", 
+    parser.add_argument('--action', default="pretrain", 
                         help='predict || train || pretrain || finetune || benchmark')
     parser.add_argument('--debug_mode', default=False, help='debug mode')
     parser.add_argument('--log_path', default='info.log')
@@ -51,8 +52,8 @@ if __name__ == '__main__':
     parser.add_argument('--freeze_encoder', default=False)
     parser.add_argument('--trans', default="None", 
                         help='TPS || None') 
-    parser.add_argument('--encoder', default="SVTR_T", 
-                        help='VGG || ResNet || GRCNN || SVTR_L || SVTR_T || None') 
+    parser.add_argument('--encoder', default="None", 
+                        help='VGG || ResNet || GRCNN || SVTR_L || SVTR_T || ViTSTR || None') 
     parser.add_argument('--encoder_with_transformer', default=False)
     parser.add_argument('--SequenceModeling', default="None",
                         help="BiLSTM || Attn | Position Attn || None")
@@ -60,7 +61,7 @@ if __name__ == '__main__':
                         help='CTC || SeqAttn || Transformer || LM || None')
     parser.add_argument('--language_module', default="BCN", 
                         help='BCN || None')
-    parser.add_argument('--language_module_checkpoint', default="None", 
+    parser.add_argument('--language_module_checkpoint', default=r"C:\Users\victor\Desktop\experiment\checkpoints\lm", 
                         help='path || None')
     
     parser.add_argument('--input_channel', type=int, default=3,
@@ -120,9 +121,11 @@ if __name__ == '__main__':
     opt.num_class = len(charset)
     opt.charset = charset
 
-    if opt.action == 'pretrain':
+    if opt.action == 'pretrain' and opt.encoder != 'None':
       opt.projection_input_channel = opt.output_channel
       pretrain(opt, log)
+    elif opt.action == 'pretrain' and opt.decoder == 'LM':
+      pretrainBCN(opt, log)
     elif opt.action == 'predict':
       opt.batch_size = 1
       predict(opt, log)

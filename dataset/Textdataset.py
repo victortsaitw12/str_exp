@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 import lmdb
 import random
@@ -81,11 +82,11 @@ class SpellingMutation(object):
         return new_text if len(new_text) >= 1 else text
 
 class TextDataset(Dataset):
-  def __init__(self, root, charset=None):
+  def __init__(self, root, charset=None, max_length=50, limit=1):
     super(TextDataset, self).__init__()
-    # self.file_path = root
-    # self.df = pd.read_csv(self.file_path, delimiter='\t')['gt']
     self.charset = charset
+    self.max_len = max_length
+    self.eos = charset.get_eos_index()
     self.sm = SpellingMutation(charset=self.charset)
 
     self.env = lmdb.open(root, 
@@ -103,7 +104,7 @@ class TextDataset(Dataset):
       index_list = [index + 1 for index in range(self.nSamples)
                 if (index % 10) > 4]
         
-      data_limit = int(len(index_list) * 1.0)
+      data_limit = int(len(index_list) * limit)
       self.filtered_index_list = index_list[:data_limit]
 
   def __len__(self):
@@ -117,40 +118,28 @@ class TextDataset(Dataset):
         label = '<unk>'
     return label
 
-
-
   def __getitem__(self, index):
     assert index <= len(self), 'index range error'
     index = self.filtered_index_list[index]
     label_key = 'label-%09d'.encode() % index
     label_y = self._readitem(label_key=label_key)
     label_x = self.sm(label_y)
+
     label_x = self.charset.lookup_indices(list(label_x))
+    label_x = label_x + [self.eos]
+    label_x = torch.LongTensor(label_x)
+    label_x = F.pad(label_x, (0, self.max_len - len(label_x)), value=self.eos)
+    label_x = onehot(label_x, len(self.charset))
+
     label_y = self.charset.lookup_indices(list(label_y))
+    label_y = label_y + [self.eos]
+    label_y = torch.LongTensor(label_y)
+    label_y = F.pad(label_y, (0, self.max_len - len(label_y)), value=self.eos)
     return label_x, label_y
-    # text_y = self.df.iloc[idx]
-    # text_x = self.sm(text_y)
-    # return text_x, text_y
-
-
-class TextDatasetFromCSV(Dataset):
-  def __init__(self, root, charset=None):
-    super(TextDatasetFromCSV, self).__init__()
-    self.file_path = root
-    self.df = pd.read_csv(self.file_path, encoding='utf-8')
-    self.charset = charset
-    self.sm = SpellingMutation(charset=self.charset)
-
-  def __len__(self):
-    return len(self.df)
-
-  def __getitem__(self, index):
-    assert index <= len(self), 'index range error'
-    label_y = self.df.iloc[index, 1]
-    label_x = self.sm(label_y)
-    label_x = self.charset.lookup_indices(list(label_x))
-    label_y = self.charset.lookup_indices(list(label_y))
-    return label_x, label_y
- 
-
-
+  
+def onehot(label, depth, device=None):
+  if not isinstance(label, torch.Tensor):
+    label = torch.tensor(label, device=device)
+  onehot = torch.zeros(label.size() + torch.Size([depth]), device=device)
+  onehot = onehot.scatter_(-1, label.unsqueeze(-1), 1)
+  return onehot
