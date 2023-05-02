@@ -84,10 +84,28 @@ def attn_collate_fn(batch, max_len, bos, eos, pad):
   tgt = torch.stack(tgt)
   src = torch.stack(src)
   tgt_in = tgt[:, :-1]
+
   tgt_out = tgt[:, 1:]
   n_tokens = (tgt_out != pad).sum()
   return src, tgt_in, tgt_out, n_tokens
 
+
+def vit_collate_fn(batch, max_len, bos, eos, pad):
+  tgt = []
+  src = []
+  for _src, _tgt in batch:
+    _tgt = [bos] + _tgt + [eos]
+    _tgt = torch.LongTensor(_tgt)
+    _tgt = F.pad(_tgt, (0, max_len - len(_tgt)), value=pad)
+    tgt.append(_tgt)
+    src.append(_src)
+  tgt = torch.stack(tgt)
+  src = torch.stack(src)
+  # tgt_in = tgt[:, :-1]
+  
+  # tgt_out = tgt[:, 1:]
+  n_tokens = (tgt != pad).sum()
+  return src, tgt, tgt, n_tokens
 
 class MyLogger(object):
   def __init__(self, log_path, mode='debug'):

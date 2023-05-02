@@ -12,16 +12,16 @@ import numpy as np
 from torch.utils.data import random_split
 
 def pretrainBCN(opt, log):
-    pretrain_dataset = TextDataset(root=opt.lmdb_root, 
+    pretrain_dataset = TextDataset(root=opt.raw_root, 
                                     charset=opt.charset,
                                     max_length=opt.max_len,
                                     limit=opt.data_limit)
     pretrain_len = len(pretrain_dataset)
-    valid_len = int(pretrain_len * 0.1)
+    valid_len = int(pretrain_len * 0.001)
     pretrain_len = pretrain_len - valid_len
     pretrain_ds, valid_ds = random_split(pretrain_dataset, [pretrain_len, valid_len])
     pretrain_loader = DataLoader(pretrain_ds, batch_size=opt.batch_size,
-                            shuffle=True,
+                            shuffle=False,
                             pin_memory=True, 
                             drop_last=True,
                             num_workers=opt.num_workers)
@@ -32,6 +32,9 @@ def pretrainBCN(opt, log):
                             num_workers=opt.num_workers)
     log('[Pretrain LM]pretrain_loader:{}, dataset:{}'.format(
         len(pretrain_loader), len(pretrain_loader.dataset)
+    ))
+    log('[Pretrain LM]valid_loader:{}, dataset:{}'.format(
+        len(valid_loader), len(valid_loader.dataset)
     ))
     model=BCNLanguage( input_channel=opt.input_channel,
               num_classes=opt.num_class,
@@ -71,7 +74,6 @@ def pretrainBCN(opt, log):
 
             step += 1
         
-        log.add_scalar('Pretrain/LM', scheduler.get_last_lr()[0], epoch)
 
     log.close()
     save_ckp(model.state_dict(), optimizer.state_dict(),
@@ -104,34 +106,34 @@ def validationByBatch(loader, model, criterion, opt):
   length_of_data = 0
   with torch.no_grad():
     for i, batch in enumerate(loader):
-      length_of_data = length_of_data + opt.batch_size
-      
-    src, tgt = batch
-    src, tgt = src.to(opt.device), tgt.to(opt.device)
-    out, _ = model(src)
-    loss = criterion(out, tgt)
+        length_of_data = length_of_data + opt.batch_size
+        
+        src, tgt = batch
+        src, tgt = src.to(opt.device), tgt.to(opt.device)
+        out, _ = model(src)
+        loss = criterion(out, tgt)
 
-    _, preds_index = torch.max(out, dim=2)
-    # _, src_index = torch.max(src, dim=2)
-    # sources = []
-    preds_str = []
-    labels = []
-    for index in range(opt.batch_size):
-        pred_str = preds_index[index, :].tolist()
-        eos_res = np.where(np.equal(pred_str, opt.charset.get_eos_index()))
-        if eos_res[0].any():
-            eos_index = eos_res[0][0]
-            pred_str = pred_str[:eos_index]
-        preds_str.append(''.join(opt.charset.lookup_tokens(pred_str)))
+        _, preds_index = torch.max(out, dim=2)
+        # _, src_index = torch.max(src, dim=2)
+        # sources = []
+        preds_str = []
+        labels = []
+        for index in range(opt.batch_size):
+            pred_str = preds_index[index, :].tolist()
+            eos_res = np.where(np.equal(pred_str, opt.charset.get_eos_index()))
+            if eos_res[0].any():
+                eos_index = eos_res[0][0]
+                pred_str = pred_str[:eos_index]
+            preds_str.append(''.join(opt.charset.lookup_tokens(pred_str)))
 
-        t = tgt[index, :].tolist()
-        eos_res = np.where(np.equal(t, opt.charset.get_eos_index()))
-        if eos_res[0].any():
-            eos_index = eos_res[0][0]
-        t = t[:eos_index]
-        labels.append(''.join(opt.charset.lookup_tokens(t)))
-       
-      
+            t = tgt[index, :].tolist()
+            eos_res = np.where(np.equal(t, opt.charset.get_eos_index()))
+            if eos_res[0].any():
+                eos_index = eos_res[0][0]
+            t = t[:eos_index]
+            labels.append(''.join(opt.charset.lookup_tokens(t)))
+        
+        
         # s = src_index[index, :].tolist()
         # eos_res = np.where(np.equal(s, opt.charset.get_eos_index()))
         # if eos_res[0].any():

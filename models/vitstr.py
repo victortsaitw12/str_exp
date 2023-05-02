@@ -38,7 +38,7 @@ class MultiHeadAttention(nn.Module):
     self.att_drop = nn.Dropout(dropout)
     self.projection = nn.Linear(emb_size, emb_size)
 
-  def forward(self, x, mask):
+  def forward(self, x, mask=None):
     qkv = rearrange(self.qkv(x), "b n (h d qkv) -> (qkv) b h n d", h=self.num_heads, qkv=3)
     quries, keys, values = qkv[0], qkv[1], qkv[2]
     e = torch.einsum('bhqd, bhkd -> bhqk', quries, keys)
@@ -111,9 +111,14 @@ class ViT(nn.Module):
     return x
 
 class ViTSTR(nn.Module):
-  def __init__(self, in_channels=3, patch_size=16, emb_size=768, img_size=224, depth=12, n_classes=1000, **kwargs):
+  def __init__(self, max_len, emb_size, num_class, **kwargs):
     super(ViTSTR, self).__init__()
-    self.vit = ViT(in_channels=3, patch_size=16, emb_size=768, img_size=224, depth=12, n_classes=1000, **kwargs)
+    self.max_len = max_len
+    self.vit = ViT(in_channels=3, patch_size=16, emb_size=emb_size, img_size=224, depth=12, n_classes=1000, **kwargs)
+    self.head = nn.Linear(emb_size, num_class)
 
   def forward(self, x):
-    return self.vit(x)
+    x = self.vit(x)
+    x = x[:, :self.max_len]
+    x  = self.head(x)
+    return x

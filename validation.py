@@ -75,6 +75,30 @@ def validation(loader, model, criterion, optimizer, opt):
           labels.append(''.join(opt.charset.lookup_tokens(t)))
 
 
+      elif opt.encoder == 'ViTSTR':
+        tgt = torch.zeros(opt.batch_size, opt.max_len).to(opt.device)
+        src, _, tgt_y, _ = batch
+        src, tgt_y = src.to(opt.device), tgt_y.to(opt.device)
+        
+        out = model(src, tgt, is_train=False)
+        loss = criterion(
+          out.contiguous().view(-1, out.size(-1)),
+          tgt_y.contiguous().view(-1)
+        )
+        _, preds_index = torch.max(out, dim=2)
+        labels = []
+        preds_str = []
+        for i in range(opt.batch_size):
+            label = tgt_y[i].tolist()
+            label = label[1:label.index(opt.charset.get_eos_index())]
+            labels.append(''.join(opt.charset.lookup_tokens(label)))
+            
+            pred_str = preds_index[i].tolist()
+            eos_res = np.where(np.equal(pred_str, opt.charset.get_eos_index()))
+            if eos_res[0].any():
+              eos_index = eos_res[0][0]
+              pred_str = pred_str[1:eos_index]
+            preds_str.append(''.join(opt.charset.lookup_tokens(pred_str)))
       else: # Attn || Transformer
         tgt = torch.zeros(opt.batch_size, opt.max_len).to(opt.device)
         src, _, tgt_y, _ = batch
@@ -106,7 +130,7 @@ def validation(loader, model, criterion, optimizer, opt):
               eos_index = eos_res[0][0]
               pred_str = pred_str[:eos_index]
             preds_str.append(''.join(opt.charset.lookup_tokens(pred_str)))
-
+      
       tot_loss += loss.data.sum()
       tot_loss_count += loss.data.numel()
 

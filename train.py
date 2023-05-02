@@ -8,7 +8,7 @@ from dataset.lmdbdataset import LmdbDataset
 from dataset.rawdataset import RawDataset
 from models.model import Model
 from utility import MyLogger, save_ckp, load_ckp, load_encoder_ckp, img_show
-from utility import ctc_collate_fn, attn_collate_fn, lm_collate_fn, onehot_collate_fn
+from utility import ctc_collate_fn, attn_collate_fn, lm_collate_fn, onehot_collate_fn, vit_collate_fn
 from validation import validation
 from loss.multiloss import MultiLoss
 
@@ -38,12 +38,19 @@ def train(opt, log):
             charset=opt.charset,
             device=opt.device)
     else:
-        collate_fn = lambda batch: attn_collate_fn(batch=batch, max_len=opt.max_len,
-            bos=opt.charset.get_bos_index(), 
-            eos=opt.charset.get_eos_index(),
-            pad=opt.charset.get_pad_index()
-        )
-    
+        if opt.encoder == 'ViTSTR':
+             collate_fn = lambda batch: vit_collate_fn(batch=batch, max_len=opt.max_len,
+              bos=opt.charset.get_bos_index(), 
+              eos=opt.charset.get_eos_index(),
+              pad=opt.charset.get_pad_index()
+          )
+        else:
+          collate_fn = lambda batch: attn_collate_fn(batch=batch, max_len=opt.max_len,
+              bos=opt.charset.get_bos_index(), 
+              eos=opt.charset.get_eos_index(),
+              pad=opt.charset.get_pad_index()
+          )
+      
     train_loader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True,
                               collate_fn=collate_fn, pin_memory=True, drop_last=True,
                               num_workers=opt.num_workers)
@@ -68,9 +75,11 @@ def train(opt, log):
 
     if opt.decoder == 'CTC':
       criterion = nn.CTCLoss(zero_infinity=True)
-    else:
-      # criterion = nn.CrossEntropyLoss(ignore_index=opt.charset.get_pad_index())
+    elif opt.decoder == 'LM':
       criterion = MultiLoss(ignore_index=opt.charset.get_pad_index())
+    else:
+      criterion = nn.CrossEntropyLoss(ignore_index=opt.charset.get_pad_index())
+  
     # === Load previous status ===
     start_epoch = 0
     step = 0
@@ -147,6 +156,7 @@ def train_one_batch(loader, model, criterion, optimizer, opt):
       src, tgt, tgt_y, n_tokens = batch
       src, tgt, tgt_y = src.to(opt.device), tgt.to(opt.device), tgt_y.to(opt.device)
       out = model(src, tgt)
+      # print('out:', out.shape)
     # out = model.projector(out)
       loss = criterion(
         out.contiguous().view(-1, out.size(-1)),

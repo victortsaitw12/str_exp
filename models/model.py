@@ -49,7 +49,9 @@ class Encoder(nn.Module):
                                       max_seq_len=opt.max_len,
                                       out_channels=opt.output_channel)
         elif opt.encoder == 'ViTSTR':
-              self.encoder = ViTSTR()
+              self.encoder = ViTSTR(max_len=opt.max_len,
+                                    emb_size=opt.output_channel,
+                                    num_class=opt.num_class)
         else:
             raise Exception('No FeatureExtraction module specified')
 
@@ -144,7 +146,8 @@ class Model(nn.Module):
                                               pad=opt.charset.get_pad_index())
 
         else:
-            raise Exception('Prediction is neither CTC or Attn')
+            self.decoder = nn.Identity()
+            # raise Exception('Prediction is neither CTC or Attn')
         
         if opt.decoder == 'LM' and opt.language_module != 'None':
             self.language_module = BCNAlignment(
