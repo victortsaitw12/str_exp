@@ -206,7 +206,8 @@ class Model(nn.Module):
             prediction = self.decoder(contextual_feature.contiguous())
             
         elif self.stages['decoder'] == 'SeqAttn':
-            prediction = self.decoder(contextual_feature.contiguous(), text, is_train, batch_max_length=self.opt.max_len)
+            prediction = self.decoder(contextual_feature.contiguous(), 
+                                      text, is_train, batch_max_length=self.opt.max_len)
         else:
             prediction = contextual_feature
 

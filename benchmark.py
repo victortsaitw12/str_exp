@@ -47,14 +47,14 @@ def benchmark(opt, log):
             elif opt.decoder == 'LM':
                 tgt = torch.LongTensor(opt.batch_size, opt.max_len)
                 out = model(img, tgt)
-                _, preds_index = torch.max(out[2], dim=2)
+                _, preds_index = torch.max(out[0][-1], dim=2)
 
                 for index in range(opt.batch_size):
                     pred_str = preds_index[index, :].tolist()
                     eos_res = np.where(np.equal(pred_str, opt.charset.get_eos_index()))
                     if eos_res[0].any():
                         eos_index = eos_res[0][0]
-                        pred_str = pred_str[1:eos_index]
+                        pred_str = pred_str[:eos_index]
                     pred = ''.join(opt.charset.lookup_tokens(pred_str))
 
             elif opt.encoder == 'ViTSTR':

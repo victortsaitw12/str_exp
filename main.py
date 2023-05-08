@@ -16,7 +16,7 @@ import sys
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # utility
-    parser.add_argument('--action', default="predict", 
+    parser.add_argument('--action', default="train", 
                         help='predict || train || pretrain || finetune || benchmark')
     parser.add_argument('--debug_mode', default=False, help='debug mode')
     parser.add_argument('--log_path', default='info.log')
@@ -50,14 +50,14 @@ if __name__ == '__main__':
     parser.add_argument('--num_fiducial', default=20, help="for TPS")
     # architecture
     parser.add_argument('--freeze_encoder', default=False)
-    parser.add_argument('--trans', default="None", 
+    parser.add_argument('--trans', default="TPS", 
                         help='TPS || None') 
-    parser.add_argument('--encoder', default="ViTSTR", 
+    parser.add_argument('--encoder', default="SVTR_T", 
                         help='VGG || ResNet || GRCNN || SVTR_L || SVTR_T || ViTSTR || None') 
     parser.add_argument('--encoder_with_transformer', default=False)
     parser.add_argument('--SequenceModeling', default="None",
                         help="BiLSTM || Attn | Position Attn || None")
-    parser.add_argument('--decoder', default="None", 
+    parser.add_argument('--decoder', default="CTC", 
                         help='CTC || SeqAttn || Transformer || LM || None')
     parser.add_argument('--language_module', default="None", 
                         help='BCN || None')

@@ -7,6 +7,8 @@ from models.model import Model
 import os
 from PIL import Image
 from torchvision.transforms import transforms
+from torchsummary import summary
+import time
 
 def predict(opt, log):
     print(f'predict {opt.predict_img}')
@@ -30,9 +32,13 @@ def predict(opt, log):
     # Inference
     model.eval()
     with torch.no_grad():
+        start_time = time.time()
         if opt.decoder == 'CTC':
             tgt = torch.LongTensor(opt.batch_size, opt.max_len)
+            # summary(model, [(3, 224, 224), (1, 50)])
+            summary(model, [(3, 32, 128), (50,)], dtypes=[torch.float, torch.long])
             out = model(img, tgt)
+            print('Duration:', time.time() - start_time)
             _, preds_index = out.max(2)
             t = preds_index.squeeze().tolist()
             char_list = [t[i] for i in range(len(t)) 
@@ -41,7 +47,10 @@ def predict(opt, log):
             preds_str = ''.join(opt.charset.lookup_tokens(char_list))
         elif opt.decoder == 'LM':
             tgt = torch.LongTensor(opt.batch_size, opt.max_len)
+            # summary(model.encoder, [(3, 32, 128)], dtypes=[torch.float])
+            summary(model, [(3, 32, 128), (50,)], dtypes=[torch.float, torch.long])
             out = model(img, tgt)
+            print('Duration:', time.time() - start_time)
             _, preds_index = torch.max(out[0][-1], dim=2)
 
             for index in range(opt.batch_size):
@@ -54,7 +63,9 @@ def predict(opt, log):
 
         elif opt.encoder == 'ViTSTR':
             tgt = torch.zeros(opt.batch_size, opt.max_len).to(opt.device)
+            summary(model, [(3, 224, 224), (50,)], dtypes=[torch.float, torch.long])
             out = model(img, tgt, is_train=False)
+            print('Duration:', time.time() - start_time)
             _, preds_index = torch.max(out, dim=2)
             
             
@@ -69,7 +80,12 @@ def predict(opt, log):
             tgt = torch.LongTensor(opt.batch_size, opt.max_len)
             tgt.fill_(opt.charset.get_bos_index())
             tgt = tgt.to(opt.device)
+            summary(model, [(3, 32, 128), (50,)], dtypes=[torch.float, torch.long])
+            # summary(model.encoder, (3, 32, 128))
+            # summary(model.SequenceModeling, (32, 384))
+            # summary(model.decoder, [(32, 256), (50,)], dtypes=[torch.float, torch.long])
             out = model(img, tgt)
+            print('Duration:', time.time() - start_time)
             _, preds_index = torch.max(out, dim=2)
 
             for i in range(opt.batch_size):        
