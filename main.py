@@ -57,11 +57,11 @@ if __name__ == '__main__':
     parser.add_argument('--encoder_with_transformer', default=False)
     parser.add_argument('--SequenceModeling', default="None",
                         help="BiLSTM || Attn | Position Attn || None")
-    parser.add_argument('--decoder', default="CTC", 
+    parser.add_argument('--decoder', default="LM", 
                         help='CTC || SeqAttn || Transformer || LM || None')
-    parser.add_argument('--language_module', default="None", 
+    parser.add_argument('--language_module', default="BCN", 
                         help='BCN || None')
-    parser.add_argument('--language_module_checkpoint', default=r"C:\Users\victor\Desktop\experiment\checkpoints\lm", 
+    parser.add_argument('--language_module_checkpoint', default=r"C:\Users\victor\Desktop\experiment\checkpoints\lm\checkpoint.pt", 
                         help='path || None')
     
     parser.add_argument('--input_channel', type=int, default=3,
