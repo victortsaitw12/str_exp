@@ -6,13 +6,18 @@ import numpy as np
 from nltk.metrics.distance import edit_distance
 from models.model import Model
 from dataset.rawdataset import RawDataset
-
+from torch.utils.data import ConcatDataset
 def benchmark(opt, log):
     log('benchmark')
     test_dataset = RawDataset(root=opt.raw_root, file_path=opt.test_path,
                             img_w=opt.img_w, img_h=opt.img_h, 
                             charset=opt.charset, rgb=opt.rgb)
-    
+    ds2 = RawDataset(root=r'C:\Users\victor\Desktop\experiment\datasets\my_dataset_1',
+                            file_path=r'C:\Users\victor\Desktop\experiment\datasets\my_dataset_1\labels.txt',
+                            img_w=opt.img_w, img_h=opt.img_h, 
+                            charset=opt.charset, rgb=opt.rgb)
+    test_dataset = ConcatDataset([test_dataset, ds2])
+    print('test_dataset:', len(test_dataset))
     # Load saved model
     model=Model(opt).to(opt.device)
     f_path = os.path.join(opt.save_path, 'checkpoint.pt')

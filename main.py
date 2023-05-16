@@ -16,7 +16,7 @@ import sys
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # utility
-    parser.add_argument('--action', default="train", 
+    parser.add_argument('--action', default="predict", 
                         help='predict || train || pretrain || finetune || benchmark')
     parser.add_argument('--debug_mode', default=False, help='debug mode')
     parser.add_argument('--log_path', default='info.log')
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('--freeze_encoder', default=False)
     parser.add_argument('--trans', default="TPS", 
                         help='TPS || None') 
-    parser.add_argument('--encoder', default="SVTR_T", 
+    parser.add_argument('--encoder', default="SVTR_L", 
                         help='VGG || ResNet || GRCNN || SVTR_L || SVTR_T || ViTSTR || None') 
     parser.add_argument('--encoder_with_transformer', default=False)
     parser.add_argument('--SequenceModeling', default="None",
@@ -61,7 +61,7 @@ if __name__ == '__main__':
                         help='CTC || SeqAttn || Transformer || LM || None')
     parser.add_argument('--language_module', default="BCN", 
                         help='BCN || None')
-    parser.add_argument('--language_module_checkpoint', default=r"C:\Users\victor\Desktop\experiment\checkpoints\lm\checkpoint.pt", 
+    parser.add_argument('--language_module_checkpoint', default=r'None', 
                         help='path || None')
     
     parser.add_argument('--input_channel', type=int, default=3,
