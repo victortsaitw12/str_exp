@@ -52,14 +52,14 @@ if __name__ == '__main__':
     parser.add_argument('--freeze_encoder', default=False)
     parser.add_argument('--trans', default="TPS", 
                         help='TPS || None') 
-    parser.add_argument('--encoder', default="SVTR_L", 
+    parser.add_argument('--encoder', default="SVTR_T", 
                         help='VGG || ResNet || GRCNN || SVTR_L || SVTR_T || ViTSTR || None') 
     parser.add_argument('--encoder_with_transformer', default=False)
     parser.add_argument('--SequenceModeling', default="None",
                         help="BiLSTM || Attn | Position Attn || None")
-    parser.add_argument('--decoder', default="LM", 
+    parser.add_argument('--decoder', default="CTC", 
                         help='CTC || SeqAttn || Transformer || LM || None')
-    parser.add_argument('--language_module', default="BCN", 
+    parser.add_argument('--language_module', default="None", 
                         help='BCN || None')
     parser.add_argument('--language_module_checkpoint', default=r'None', 
                         help='path || None')

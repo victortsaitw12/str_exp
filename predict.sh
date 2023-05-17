@@ -1,5 +1,5 @@
 # vitstr
-& C:/Users/victor/anaconda3/python.exe c:/Users/victor/Desktop/experiment/src/main.py --save_path C:\Users\victor\Desktop\exp_id_19 --img_w 224 --img_h 224 --action predict --trans None --encoder ViTSTR --language_module None
+& C:/Users/victor/anaconda3/python.exe c:/Users/victor/Desktop/experiment/src/main.py --save_path C:\Users\victor\Desktop\exp_id_19 --img_w 224 --img_h 224 --action predict --trans None --encoder ViTSTR --decoder None --language_module None
 
 # TRBA
 & C:/Users/victor/anaconda3/python.exe c:/Users/victor/Desktop/experiment/src/main.py --save_path C:\Users\victor\Desktop\exp_id_13 --action predict --trans TPS --encoder ResNet --SequenceModeling BiLSTM --decoder SeqAttn --language_module None
